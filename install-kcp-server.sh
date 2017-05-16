@@ -325,7 +325,7 @@ function fun_download_file(){
             echo "Failed to download socks5_linux_${ARCHS} file!"
             exit 1
         else
-            sed "s/SSR_DIR=/SSR_DIR=\"$(echo ${set_ssr_dir}|sed 's/\//\\\//g')\"/" ${str_program_dir}/ssr
+            sed -i "s/SSR_DIR=/SSR_DIR=\"$(echo ${set_ssr_dir}|sed 's/\//\\\//g')\"/" ${str_program_dir}/ssr
         fi
     fi
     
