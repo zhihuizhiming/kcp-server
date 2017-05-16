@@ -63,7 +63,7 @@ fun_check_run(){
     fi
 }
 fun_check_ssr_run(){
-    SSRPID=`ps -ef | grep -v grep | grep -i " python server.py m" | awk '{print $2}'`
+    SSRPID=`ps -ef | grep -v grep | grep -i " python"|grep -i " server.py m" | awk '{print $2}'`
     if [ ! -z $SSRPID ]; then
         return 0
     else
