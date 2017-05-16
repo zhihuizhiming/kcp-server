@@ -248,10 +248,10 @@ function check_iptables(){
     fi
     echo $result
 }
-function check_md5sum(){
-    md5sum --version 2>&1 >/dev/null
+function check_sha1sum(){
+    sha1sum --version 2>&1 >/dev/null
     if [[ $? -gt 6 ]] ;then
-        echo " Run md5sum failed"
+        echo " Run sha1sum failed"
     fi
     echo $result
 }
@@ -293,11 +293,11 @@ function fun_download_file(){
             echo "Failed to download ${kcptun_latest_filename} file!"
             exit 1
         fi
-        check_md5sum
-        kcptun_md5_web=$( cat ${kcptun_api_filename} | grep \"body\" | grep ${kcptun_latest_filename} | sed 's/\\r\\n/\n/g' | sed -n '/'${kcptun_latest_filename}'/p' | awk '{print $1}' )
-        down_local_md5=`md5sum ${kcptun_latest_filename} | awk '{print $1}'`
-        if [ "${down_local_md5}" != "${kcptun_md5_web}" ]; then
-            echo "md5sum not match,Failed to download ${kcptun_latest_filename} file!"
+        check_sha1sum
+        kcptun_sha1_web=$( cat ${kcptun_api_filename} | grep \"body\" | grep ${kcptun_latest_filename} | sed 's/\\r\\n/\n/g' | sed -n '/'${kcptun_latest_filename}'/p' | awk '{print $1}' )
+        down_local_sha1=`sha1sum ${kcptun_latest_filename} | awk '{print $1}'`
+        if [ "${down_local_sha1}" != "${kcptun_sha1_web}" ]; then
+            echo "sha1sum not match,Failed to download ${kcptun_latest_filename} file!"
             exit 1
         fi
         tar xzf ${kcptun_latest_filename}
