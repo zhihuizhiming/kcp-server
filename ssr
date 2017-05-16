@@ -3,4 +3,4 @@
 SSR_DIR=
 
 cd $SSR_DIR
-./run
+./run.sh
