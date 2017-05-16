@@ -294,7 +294,7 @@ function fun_download_file(){
             exit 1
         fi
         check_md5sum
-        kcptun_md5_web=$( cat ${kcptun_api_filename} | grep \"body\" | grep ${kcptun_latest_filename} | sed 's/\\r\\n/\n/g' | sed -n '/'${kcptun_latest_filename}'/p' | awk '{print $4}' )
+        kcptun_md5_web=$( cat ${kcptun_api_filename} | grep \"body\" | grep ${kcptun_latest_filename} | sed 's/\\r\\n/\n/g' | sed -n '/'${kcptun_latest_filename}'/p' | awk '{print $1}' )
         down_local_md5=`md5sum ${kcptun_latest_filename} | awk '{print $1}'`
         if [ "${down_local_md5}" != "${kcptun_md5_web}" ]; then
             echo "md5sum not match,Failed to download ${kcptun_latest_filename} file!"
