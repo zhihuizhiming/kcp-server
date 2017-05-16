@@ -712,12 +712,16 @@ function uninstall_program_server_clang(){
         esac
         checkos
         ${kcp_init} stop
+        ${kcpssr_init} stop
         if [ "${OS}" == 'CentOS' ]; then
             chkconfig --del ${program_name}
+            chkconfig --del ${kcpssr_name}
         else
             update-rc.d -f ${program_name} remove
+            update-rc.d -f ${kcp_name} remove
         fi
         rm -f /usr/bin/${program_name} ${kcp_init} /var/run/${program_name}.pid /root/${program_name}-install.log /root/${program_name}-update.log
+        rm -f /usr/bin/${kcpssr_name} ${kcpssr_init} /var/run/${kcpssr_name}.pid /root/${kcpssr_name}-install.log /root/${kcpssr_name}-update.log
         if [ "${save_config}" == 'n' ]; then
             rm -fr ${str_program_dir}
         else
