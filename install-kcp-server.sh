@@ -14,12 +14,21 @@ kcptun_api_filename="/tmp/kcptun_api_file.txt"
 program_name="kcp-server"
 kcp_init="/etc/init.d/${program_name}"
 program_config_file="server-kcptun.json"
+
+kcpssr_name="kcp-ssr"
+kcpssr_init="/etc/init.d/${kcpssr_name}"
+kcpssr_config_file="server-ssr.json"
+
 program_socks5_download="https://raw.githubusercontent.com/clangcn/kcp-server/master/socks5_latest"
 program_socks5_filename="socks5"
 socks_md5sum_file=md5sum.md
 program_init_download_url=https://raw.githubusercontent.com/clangcn/kcp-server/master/kcptun-server.init
-str_install_shell=https://raw.githubusercontent.com/clangcn/kcp-server/master/install-kcp-server.sh
 
+program_ssr_download="https://raw.githubusercontent.com/zhihuizhiming/kcp-server/master/ssr"
+program_ssr_filename="ssr"
+kcpssr_init_download_url=https://raw.githubusercontent.com/zhihuizhiming/kcp-server/master/kcptun-ssr.init
+
+str_install_shell=https://raw.githubusercontent.com/zhihuizhiming/kcp-server/master/install-kcp-server.sh
 function fun_clang(){
     echo ""
     echo "+---------------------------------------------------------+"
@@ -148,13 +157,42 @@ function fun_check_port(){
 
 # input port
 function fun_input_kcptun_port(){
-    def_server_port="45678"
+    def_server_port="2345"
     echo ""
     echo -n -e "Please input ${COLOR_GREEN}Kcptun${COLOR_END} Port [1-65535]"
     read -p "(Default Server Port: ${def_server_port}):" serverport
     [ -z "${serverport}" ] && serverport="${def_server_port}"
     fun_check_port "kcptun" "${serverport}"
 }
+
+# input port For kcpssr
+function fun_input_kcpssr_port(){
+    def_kcpssr_port="2346"
+    echo ""
+    echo -n -e "Please input ${COLOR_GREEN}Kcptun For ssr${COLOR_END} Port [1-65535]"
+    read -p "(Default Server Port: ${def_kcpssr_port}):" kcpssrport
+    [ -z "${kcpssrport}" ] && kcpssrport="${def_kcpssr_port}"
+    fun_check_port "kcptun" "${kcpssrport}"
+}
+
+# input ssr dir
+function fun_input_ssr_dir(){
+    def_ssr_dir="/opt/shadowsocksr"
+    echo ""
+    echo -n -e "Please input ${COLOR_GREEN}ssr${COLOR_END} directory"
+    read -p "(Default Server Port: ${def_ssr_dir}):" ssrdir
+    [ -z "${ssrdir}" ] && ssrdir="${def_ssr_dir}"
+}
+
+# input port
+function fun_input_ssr_port(){
+    def_ssr_port="4434"
+    echo ""
+    echo -n -e "Please input ${COLOR_GREEN}ssr${COLOR_END} Used Port [1-65535]"
+    read -p "(Default Server Port: ${def_ssr_port}):" ssrport
+    [ -z "${ssrport}" ] && ssrport="${def_ssr_port}"
+}
+
 # input port
 function fun_input_socks5_port(){
     def_socks5_port="12948"
@@ -279,10 +317,25 @@ function fun_download_file(){
             exit 1
         fi
     fi
+    
+    # download ssr file
+    if [ ! -s ${str_program_dir}/${program_ssr_filename} ]; then
+        if ! wget --no-check-certificate -q ${program_ssr_download} -O ${str_program_dir}/${program_ssr_filename}; then
+            echo "Failed to download socks5_linux_${ARCHS} file!"
+            exit 1
+        else
+            sed "s/SSR_DIR=/SSR_DIR=\"$(echo ${set_ssr_dir}|sed 's/\//\\\//g')\"/" ${str_program_dir}/ssr
+        fi
+    fi
+    
     chown root:root ${str_program_dir}/*
     [ ! -x ${str_program_dir}/${program_name} ] && chmod 755 ${str_program_dir}/${program_name}
     [ ! -x ${str_program_dir}/${program_socks5_filename} ] && chmod 755 ${str_program_dir}/${program_socks5_filename}
+    
+    [ ! -x ${str_program_dir}/${kcpssr_name} ] && chmod 755 ${str_program_dir}/${kcpssr_name}
+    [ ! -x ${str_program_dir}/${program_ssr_filename} ] && chmod 755 ${str_program_dir}/${program_ssr_filename}
 }
+
 # ====== install kcptun server ======
 function install_program_server_clang(){
     fun_getVer
@@ -291,6 +344,8 @@ function install_program_server_clang(){
     defIP=$(wget -qO- ip.clang.cn | sed -r 's/\r//')
     echo -e "You VPS IP:${COLOR_GREEN}${defIP}${COLOR_END}"
     echo -e  "${COLOR_YELOW}Please input your server setting:${COLOR_END}"
+    
+    # For socks5
     fun_input_kcptun_port
     [ -n "${input_port}" ] && set_kcptun_port="${input_port}"
     echo "kcptun port: ${set_kcptun_port}"
@@ -406,6 +461,20 @@ function install_program_server_clang(){
     set_socks5_port="${def_socks5_port}"
     echo "socks5 port: ${set_socks5_port}"
     echo ""
+    
+    # For ssr
+    fun_input_kcpssr_port
+    [ -n "${input_port}" ] && set_kcpssr_port="${input_port}"
+    echo "kcptun For ssr port: ${set_kcpssr_port}"
+    echo ""
+    fun_input_ssr_dir
+    set_ssr_dir="${ssrdir}"
+    echo "ssr dir: ${set_ssr_dir}"
+    echo ""
+    fun_input_ssr_port
+    set_ssr_port="${ssrport}"
+    echo "ssr port: ${set_ssr_port}"
+    echo ""
     set_iptables="n"
         echo  -e "\033[33mDo you want to set iptables?\033[0m"
         read -p "(if you want please input: y,Default [no]):" set_iptables
@@ -471,8 +540,39 @@ cat > ${str_program_dir}/client.json<<-EOF
     "nocomp": ${set_kcptun_comp}
 }
 EOF
-    rm -f ${str_program_dir}/${program_name} ${str_program_dir}/${program_socks5_filename}
-    echo -n "download ${program_name} & ${program_socks5_filename}..."
+
+# Config file For ssr
+cat > ${str_program_dir}/${kcpssr_config_file}<<-EOF
+{
+    "listen": ":${set_kcpssr_port}",
+    "target": "127.0.0.1:${set_ssr_port}",
+    "key": "${set_kcptun_pwd}",
+    "crypt": "${strcrypt}",
+    "mode": "${strmode}",
+    "mtu": ${strInputMTU},
+    "sndwnd": 1024,
+    "rcvwnd": 1024,
+    "nocomp": ${set_kcptun_comp}
+}
+EOF
+cat > ${str_program_dir}/client-ssr.json<<-EOF
+{
+    "localaddr": ":1083",
+    "remoteaddr": "${defIP}:${set_kcpssr_port}",
+    "key": "${set_kcptun_pwd}",
+    "crypt": "${strcrypt}",
+    "mode": "${strmode}",
+    "conn": 1,
+    "mtu": ${strInputMTU},
+    "sndwnd": 128,
+    "rcvwnd": 1024,
+    "nocomp": ${set_kcptun_comp}
+}
+EOF
+
+    rm -f ${str_program_dir}/${program_name} ${str_program_dir}/${program_socks5_filename} 
+    rm -f ${str_program_dir}/${kcpssr_name} ${str_program_dir}/${program_ssr_filename}
+    echo -n "download ${program_name} & ${program_socks5_filename} & ${kcpssr_name} & ${program_ssr_filename}..."
     fun_download_file
     echo " done"
     echo -n "download ${kcp_init}..."
@@ -482,14 +582,28 @@ EOF
             exit 1
         fi
     fi
+    
+    echo -n "download ${kcpssr_init}..."
+    if [ ! -s ${kcpssr_init} ]; then
+        if ! wget --no-check-certificate -q ${kcpssr_init_download_url} -O ${kcpssr_init}; then
+            echo "Failed to download kcptun.init file!"
+            exit 1
+        fi
+    fi
     echo " done"
     [ ! -x ${kcp_init} ] && chmod +x ${kcp_init}
+    [ ! -x ${kcpssr_init} ] && chmod +x ${kcpssr_init}
+    
     if [ "${OS}" == 'CentOS' ]; then
         chmod +x ${kcp_init}
         chkconfig --add ${program_name}
+        chmod +x ${kcpssr_init}
+        chkconfig --add ${kcpssr_name}
     else
         chmod +x ${kcp_init}
         update-rc.d -f ${program_name} defaults
+        chmod +x ${kcpssr_init}
+        update-rc.d -f ${kcpssr_name} defaults
     fi
 
     if [ "$set_iptables" == 'y' ]; then
@@ -497,6 +611,10 @@ EOF
         # iptables config
         iptables -I INPUT -p udp --dport ${set_kcptun_port} -j ACCEPT
         iptables -I INPUT -p tcp --dport ${set_socks5_port} -j ACCEPT
+        
+        iptables -I INPUT -p udp --dport ${set_kcpssr_port} -j ACCEPT
+        iptables -I INPUT -p tcp --dport ${set_ssr_port} -j ACCEPT
+        
         iptables -I INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
         if [ "${OS}" == 'CentOS' ]; then
             service iptables save
@@ -513,24 +631,27 @@ EOF
         fi
     fi
     [ -s ${kcp_init} ] && ln -s ${kcp_init} /usr/bin/${program_name}
+    [ -s ${kcpssr_init} ] && ln -s ${kcpssr_init} /usr/bin/${kcpssr_name}
     ${kcp_init} start
     str_sndwnd=`sed -n '/sndwnd/p' ${str_program_dir}/server-kcptun.json | sed 's/[[:space:]]*//g;s/,//g' | cut -d: -f2`
     str_rcvwnd=`sed -n '/rcvwnd/p' ${str_program_dir}/server-kcptun.json | sed 's/[[:space:]]*//g;s/,//g' | cut -d: -f2`
     ${str_program_dir}/${program_name} --version
+    ${kcpssr_init} start
     fun_clang
     #install successfully
     echo ""
     echo "Congratulations, kcp-server install completed!"
     echo "=============================================="
-    echo -e "Your Server IP: ${COLOR_GREEN}${defIP}${COLOR_END}"
-    echo -e "   Server Port: ${COLOR_GREEN}${set_kcptun_port}${COLOR_END}"
-    echo -e "    Server Key: ${COLOR_GREEN}${set_kcptun_pwd}${COLOR_END}"
-    echo -e "    crypt mode: ${COLOR_GREEN}${strcrypt}${COLOR_END}"
-    echo -e "     fast mode: ${COLOR_GREEN}${strmode}${COLOR_END}"
-    echo -e "   compression: ${COLOR_GREEN}${strcompression}${COLOR_END}"
-    echo -e "           MTU: ${COLOR_GREEN}${strInputMTU}${COLOR_END}"
-    echo -e "        sndwnd: ${COLOR_GREEN}${str_sndwnd}${COLOR_END}"
-    echo -e "        rcvwnd: ${COLOR_GREEN}${str_rcvwnd}${COLOR_END}"
+    echo -e " Your Server IP: ${COLOR_GREEN}${defIP}${COLOR_END}"
+    echo -e "    Server Port: ${COLOR_GREEN}${set_kcptun_port}${COLOR_END}"
+    echo -e "   For ssr Port: ${COLOR_GREEN}${set_kcpssr_port}${COLOR_END}"
+    echo -e "     Server Key: ${COLOR_GREEN}${set_kcptun_pwd}${COLOR_END}"
+    echo -e "     crypt mode: ${COLOR_GREEN}${strcrypt}${COLOR_END}"
+    echo -e "      fast mode: ${COLOR_GREEN}${strmode}${COLOR_END}"
+    echo -e "    compression: ${COLOR_GREEN}${strcompression}${COLOR_END}"
+    echo -e "            MTU: ${COLOR_GREEN}${strInputMTU}${COLOR_END}"
+    echo -e "         sndwnd: ${COLOR_GREEN}${str_sndwnd}${COLOR_END}"
+    echo -e "         rcvwnd: ${COLOR_GREEN}${str_rcvwnd}${COLOR_END}"
     echo "=============================================="
     echo ""
     echo -e "kcptun status manage: ${COLOR_PINKBACK_WHITEFONT}${kcp_init}${COLOR_END} {${COLOR_GREEN}start|stop|restart|status|config|version${COLOR_END}}"
