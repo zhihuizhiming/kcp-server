@@ -1,7 +1,6 @@
 #!/bin/sh
-SSR_DIR="/opt/shadowsocksr"
 
-
+SSR_DIR=
 
 cd $SSR_DIR
 ./run
