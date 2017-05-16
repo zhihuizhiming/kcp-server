@@ -302,6 +302,7 @@ function fun_download_file(){
         fi
         tar xzf ${kcptun_latest_filename}
         mv server_linux_${ARCHS} ${str_program_dir}/${program_name}
+        cp ${str_program_dir}/${program_name} ${str_program_dir}/${kcpssr_name}
         rm -f ${kcptun_latest_filename} client_linux_${ARCHS} ${kcptun_api_filename}
     fi
     # download socks5 proxy
