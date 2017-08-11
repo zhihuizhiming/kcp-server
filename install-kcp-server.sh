@@ -442,7 +442,7 @@ function install_program_server_clang(){
     esac
     echo "fast mode: ${strmode}"
     fun_input_mtu
-    read -p "Please enable compression input Y, Disable compression input n,Default [yes]):" strcompression
+    read -p "Please enable compression input Y, Disable compression input n,Default [no]):" strcompression
     case "${strcompression}" in
     1|[yY]|[yY][eE][sS]|[tT][rR][uU][eE]|[eE][nN][aA][bB][lL][eE])
         strcompression="enable"
@@ -453,8 +453,8 @@ function install_program_server_clang(){
         set_kcptun_comp="true"
     ;;
     *)
-        strcompression="enable"
-        set_kcptun_comp="false"
+        strcompression="disable"
+        set_kcptun_comp="true"
     esac
     echo "compression: ${strcompression}"
     echo ""
@@ -476,9 +476,9 @@ function install_program_server_clang(){
     set_ssr_port="${ssrport}"
     echo "ssr port: ${set_ssr_port}"
     echo ""
-    set_iptables="n"
+    set_iptables="y"
         echo  -e "\033[33mDo you want to set iptables?\033[0m"
-        read -p "(if you want please input: y,Default [no]):" set_iptables
+        read -p "(if you want please input: y,Default [yes]):" set_iptables
 
         case "${set_iptables}" in
         [yY]|[yY][eE][sS])
@@ -490,8 +490,8 @@ function install_program_server_clang(){
         set_iptables="n"
         ;;
         *)
-        echo "The iptables is not set!"
-        set_iptables="n"
+        echo "The iptables is set!"
+        set_iptables="y"
         esac
 
     echo ""
