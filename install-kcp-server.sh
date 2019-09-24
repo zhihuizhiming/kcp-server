@@ -19,10 +19,10 @@ kcpssr_name="kcp-ssr"
 kcpssr_init="/etc/init.d/${kcpssr_name}"
 kcpssr_config_file="server-ssr.json"
 
-program_socks5_download="https://raw.githubusercontent.com/clangcn/kcp-server/master/socks5_latest"
+program_socks5_download="https://raw.githubusercontent.com/zhihuizhiming/kcp-server/master/socks5_latest"
 program_socks5_filename="socks5"
 socks_md5sum_file=md5sum.md
-program_init_download_url=https://raw.githubusercontent.com/clangcn/kcp-server/master/kcptun-server.init
+program_init_download_url=https://raw.githubusercontent.com/zhihuizhiming/kcp-server/master/kcptun-server.init
 
 program_ssr_download="https://raw.githubusercontent.com/zhihuizhiming/kcp-server/master/ssr"
 program_ssr_filename="ssr"
@@ -32,11 +32,9 @@ str_install_shell=https://raw.githubusercontent.com/zhihuizhiming/kcp-server/mas
 function fun_clang(){
     echo ""
     echo "+---------------------------------------------------------+"
-    echo "|        kcptun for Linux Server, Written by Clang        |"
+    echo "|                  kcptun for Linux Server                |"
     echo "+---------------------------------------------------------+"
     echo "| A tool to auto-compile & install kcptun-server on Linux |"
-    echo "+---------------------------------------------------------+"
-    echo "|        Intro: http://koolshare.cn/forum-72-1.html       |"
     echo "+---------------------------------------------------------+"
     echo ""
 }
